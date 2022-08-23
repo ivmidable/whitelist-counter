@@ -8,6 +8,8 @@ use cw_multi_test::{App, AppBuilder, AppResponse, BankKeeper, Contract, Contract
 use derivative::Derivative;
 use serde::{de::DeserializeOwned, Serialize};
 
+use nft::{self, helpers::NftContract};
+
 const USER: &str = "USER";
 const ADMIN: &str = "ADMIN";
 const NATIVE_DENOM: &str = "denom";
@@ -37,6 +39,15 @@ pub fn contract_cw1() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
+pub fn contract_nft() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        nft::contract::entry::execute,
+        nft::contract::entry::instantiate,
+        nft::contract::entry::query,
+    );
+    Box::new(contract)
+}
+
 
 #[derive(Derivative)]
 #[derivative(Debug)]
@@ -48,6 +59,8 @@ pub struct Suite {
     pub owner: String,
     /// ID of stored code for cw1 contract
     cw1_id: u64,
+
+    nft_id:u64
 }
 
 impl Suite {
@@ -55,8 +68,9 @@ impl Suite {
         let mut app = mock_app();
         let owner = "owner".to_owned();
         let cw1_id = app.store_code(contract_cw1());
+        let nft_id = app.store_code(contract_nft());
 
-        Ok(Suite { app, owner, cw1_id })
+        Ok(Suite { app, owner, cw1_id, nft_id })
     }
 
     pub fn instantiate_cw1_contract(&mut self, admins: Vec<String>, mutable: bool) -> Cw1Contract {
@@ -72,6 +86,21 @@ impl Suite {
             )
             .unwrap();
         Cw1Contract(contract)
+    }
+
+    pub fn instantiate_nft_contract(&mut self, name:String, symbol:String, minter:String) -> NftContract {
+        let contract = self
+            .app
+            .instantiate_contract(
+                self.nft_id,
+                Addr::unchecked(self.owner.clone()),
+                &nft::contract::InstantiateMsg { name, symbol, minter },
+                &[],
+                "nft",
+                None,
+            )
+            .unwrap();
+        NftContract(contract)
     }
 
     pub fn execute<M>(
@@ -109,6 +138,16 @@ impl Suite {
             msg: to_binary(&msg).unwrap(),
         }))
     }
+}
+
+#[test]
+fn make_nft_contract_owned_by_cw1_then_mint() {
+    let mut suite = Suite::init().unwrap();
+    let cw1_contract = suite.instantiate_cw1_contract(vec!["addr1".to_string(), "addr2".to_string(), "addr3".to_string()], false);
+    let nft_contract = suite.instantiate_nft_contract("test_nft".to_string(), "TEST".to_string(), cw1_contract.addr().to_string());
+    let mint_msg = nft::contract::MintMsg{token_id:"0".to_string(), owner:USER.to_string(), token_uri:Some("url".to_string()), extension:None };
+    let msg = nft::contract::ExecuteMsg::Mint(mint_msg);
+    suite.execute(cw1_contract.addr(), &nft_contract.addr(), msg).unwrap();
 }
 
 #[test]
