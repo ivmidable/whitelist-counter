@@ -121,7 +121,7 @@ impl Suite {
         };
         self.app
             .execute_contract(
-                Addr::unchecked(self.owner.clone()),
+                Addr::unchecked("addr1".to_string()),
                 sender_contract,
                 &execute,
                 &[],

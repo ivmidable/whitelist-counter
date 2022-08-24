@@ -1,0 +1,2 @@
+5e2c6ecb15be1c7949822520837452fd12d67e4e89a7db37c3023c785598deae  target/wasm32-unknown-unknown/release/cw1_whitelist.wasm
+95f44996f363db2f80a78da3f00bd48edd5024a091f8d9852c2e8880caacd1f8  target/wasm32-unknown-unknown/release/nft.wasm
