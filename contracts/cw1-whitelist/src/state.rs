@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::Addr;
 use cw_storage_plus::Item;
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug, Default)]
 pub struct AdminList {
     pub admins: Vec<Addr>,
     pub mutable: bool,
@@ -12,7 +12,8 @@ pub struct AdminList {
 
 impl AdminList {
     /// returns true if the address is a registered admin
-    pub fn is_admin(&self, addr: &str) -> bool {
+    pub fn is_admin(&self, addr: impl AsRef<str>) -> bool {
+        let addr = addr.as_ref();
         self.admins.iter().any(|a| a.as_ref() == addr)
     }
 

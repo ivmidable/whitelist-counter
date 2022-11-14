@@ -6,7 +6,7 @@ members = ["contracts/*"]
 codegen-units = 1
 incremental = false
 
-[profile.release.package.nft]
+[profile.release.package.counter]
 codegen-units = 1
 incremental = false
 
